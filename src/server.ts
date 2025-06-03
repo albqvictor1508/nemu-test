@@ -14,15 +14,21 @@ export async function main() {
 		const sheet = file.Sheets[file.SheetNames[0]];
 		const json = xlsx.utils.sheet_to_json(sheet);
 		const parsedJson = JSON.parse(JSON.stringify(json));
-		const journeys = await validateJourneys(parsedJson);
-		console.log(`JOURNEYS: ${journeys}`);
+		const journeys = (await validateJourneys(parsedJson)) || null;
+		if (!journeys) {
+			return;
+		}
+		console.log(journeys);
 	} catch (error) {
 		console.error(error);
 		throw error;
 	}
 }
+main().then();
 
-export async function validateJourneys(rawData: RawDataSchema[]) {
+export async function validateJourneys(
+	rawData: RawDataSchema[],
+): Promise<JourneySchema[] | null> {
 	const rawDataFormatted = new Map<string, RawDataSchema[]>();
 	const jorneyAgrouped: JourneySchema[] = [];
 	for (let i = 0; i < rawData.length; i++) {
@@ -33,36 +39,47 @@ export async function validateJourneys(rawData: RawDataSchema[]) {
 
 		rawDataFormatted.get(item.sessionId)?.push(item);
 	}
-
 	for (const [sessionId, item] of rawDataFormatted) {
-		const sortByCreatedAt = item.sort(
+		const sortByCreatedAt: RawDataSchema[] = item.sort(
 			(a, b) =>
 				new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
 		);
-		const firstTouchpoint = sortByCreatedAt.shift()?.utm_source;
-		const lastTouchpoint = sortByCreatedAt.pop()?.utm_source;
 
-		const restTouchpoints = new Set<string>(
-			sortByCreatedAt
-				.slice(-1, 1)
-				.filter(
-					(item) =>
-						item.utm_source !== firstTouchpoint ||
-						item.utm_source !== lastTouchpoint,
-				)
-				//garantir o funcionamento, persistir os dados, consultá-los pra retornar via GET
-				.map((item) => item.utm_source),
-		);
-		const createdAt = item.map((i) => i.createdAt).shift();
-		if (!createdAt) return;
-		jorneyAgrouped.push({
-			firstTouchpoint: firstTouchpoint as string,
-			lastTouchpoint: lastTouchpoint as string,
-			restTouchpoints,
-			sessionId,
-			createdAt,
-		});
+		const firstTouchpoint = sortByCreatedAt[0].utm_source;
+		const lastTouchpoint =
+			sortByCreatedAt[sortByCreatedAt.length - 1].utm_source;
+
+		if (
+			typeof firstTouchpoint !== "string" ||
+			typeof lastTouchpoint !== "string"
+		) {
+			return null;
+		}
+
+		const restTouchpoints = new Set<string>();
+
+		for (const i of item) {
+			jorneyAgrouped.push({
+				firstTouchpoint,
+				lastTouchpoint,
+				restTouchpoints,
+				sessionId,
+				createdAt: i.createdAt,
+			});
+		}
+
+		//todo: analisar esse for, acredito que ele seja o causador do problema
+		for (let i = 1; i < sortByCreatedAt.length - 2; i++) {
+			const item = sortByCreatedAt[i];
+			if (
+				item.utm_source === firstTouchpoint ||
+				item.utm_source === lastTouchpoint
+			)
+				continue;
+			restTouchpoints.add(sortByCreatedAt[i].utm_source);
+		}
 	}
+
 	return jorneyAgrouped;
 }
 
