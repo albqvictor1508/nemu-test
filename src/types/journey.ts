@@ -3,7 +3,7 @@ export type JourneySchema = {
 	lastTouchpoint: string;
 	sessionId: string;
 	createdAt: string;
-	restTouchpoints: string[];
+	restTouchpoints: Set<string>;
 };
 
 export type RawDataSchema = {
