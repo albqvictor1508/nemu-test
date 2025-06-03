@@ -1,0 +1,7 @@
+services:
+  nemu-pg:
+    image: postgres
+    ports:
+      - "6002:5432"
+    env_file:
+      - .env
