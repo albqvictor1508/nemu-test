@@ -1,9 +1,11 @@
-import { JourneysTable } from './components/journeys-table'
+import { JourneysTable } from "./components/journeys-table";
 
-function App() {
-  return (
-    <JourneysTable />
-  )
-}
+const App = () => {
+	return (
+		<>
+			<JourneysTable />
+		</>
+	);
+};
 
-export default App
+export default App;
