@@ -8,8 +8,11 @@ import { journeys, touchpoints } from "./drizzle/schema";
 import { validateJourneys } from "./functions/validate-journeys";
 import { groupJourneys } from "./functions/group-jorneys";
 import { saveJourneys } from "./functions/save-journeys";
+import fastifyCors from "@fastify/cors";
+import { count } from "drizzle-orm";
 
 export const app = fastify();
+app.register(fastifyCors);
 app.register(multipart);
 
 async function readExcelFile() {
@@ -34,9 +37,9 @@ async function init(): Promise<void> {
 	if (!jorneyValidatedData) return;
 	await saveJourneys(jorneyValidatedData);
 }
-init().then();
 
 app.get("/journeys", async (_, reply) => {
+	await init();
 	const touchpointsGrouped = new Map<number, string[]>();
 	const journeysReply = await db.select().from(journeys);
 
@@ -51,6 +54,10 @@ app.get("/journeys", async (_, reply) => {
 		touchpointsGrouped.set(t.journeyId, touchpointList);
 	}
 
+	const journeysLength = await db
+		.select({ qtd: count(journeys.id) })
+		.from(journeys);
+
 	const response = journeysReply.map((j) => {
 		return {
 			id: j.id,
@@ -59,6 +66,7 @@ app.get("/journeys", async (_, reply) => {
 			lastTouchpoint: j.lastTouchpoint,
 			touchpoints: touchpointsGrouped.get(j.id) ?? [],
 			createdAt: j.createdAt,
+			journeysLength,
 		};
 	});
 
