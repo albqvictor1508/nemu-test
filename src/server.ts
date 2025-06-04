@@ -6,27 +6,37 @@ import type { JourneySchema, RawDataSchema, Touchpoint } from "./types/journey";
 import { db } from "./drizzle/client";
 import { journeys, touchpoints } from "./drizzle/schema";
 import { validateJourneys } from "./functions/validate-journeys";
+import { groupJourneys } from "./functions/group-jorneys";
+import { saveJourneys } from "./functions/save-journeys";
 
 export const app = fastify();
 app.register(multipart);
 
-export async function readExcelFile() {
+async function readExcelFile() {
 	try {
 		const filePath = resolve(__dirname, "file", "Nemu-Base-de-dados.xlsx");
 		const file = xlsx.readFile(filePath);
 		const sheet = file.Sheets[file.SheetNames[0]];
 		const json = xlsx.utils.sheet_to_json(sheet);
 		const parsedJson = JSON.parse(JSON.stringify(json));
-		if (!journeys) return;
+		return parsedJson;
 	} catch (error) {
 		console.error(error);
 		throw error;
 	}
 }
 
-//salvar elas no banco
-//filtrar agrupando por sessão do usuário(sessionId)  e ordenando por criação(created_at)
-app.get("/journeys", async (request, reply) => {
+async function init(): Promise<void> {
+	const parsedData = await readExcelFile();
+	const rawDataFormatted = await groupJourneys(parsedData);
+	const jorneyValidatedData =
+		(await validateJourneys(rawDataFormatted)) || null;
+	if (!jorneyValidatedData) return;
+	await saveJourneys(jorneyValidatedData);
+}
+init().then();
+
+app.get("/journeys", async (_, reply) => {
 	const touchpointsGrouped = new Map<number, string[]>();
 	const journeysReply = await db.select().from(journeys);
 
