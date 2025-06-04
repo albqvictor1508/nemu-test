@@ -4,6 +4,8 @@ export type JourneySchema = {
 	sessionId: string;
 	createdAt: string;
 	restTouchpoints: Set<string>;
+	content;
+	campaign;
 };
 
 export type RawDataSchema = {

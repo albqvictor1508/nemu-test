@@ -3,6 +3,8 @@ import multipart from "@fastify/multipart";
 import { resolve } from "node:path";
 import xlsx from "xlsx";
 import type { JourneySchema, RawDataSchema } from "./types/journey";
+import { db } from "./drizzle/client";
+import { journeys, touchpoints } from "./drizzle/schema";
 
 export const app = fastify();
 app.register(multipart);
@@ -15,10 +17,8 @@ export async function main() {
 		const json = xlsx.utils.sheet_to_json(sheet);
 		const parsedJson = JSON.parse(JSON.stringify(json));
 		const journeys = (await validateJourneys(parsedJson)) || null;
-		if (!journeys) {
-			return;
-		}
-		console.log(journeys);
+		if (!journeys) return;
+		await saveJourneys(journeys);
 	} catch (error) {
 		console.error(error);
 		throw error;
@@ -45,46 +45,46 @@ export async function validateJourneys(
 				new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
 		);
 
-		const firstTouchpoint = sortByCreatedAt[0].utm_source;
-		const lastTouchpoint =
-			sortByCreatedAt[sortByCreatedAt.length - 1].utm_source;
-
-		if (
-			typeof firstTouchpoint !== "string" ||
-			typeof lastTouchpoint !== "string"
-		) {
-			return null;
-		}
+		const firstTouchpoint = sortByCreatedAt[0];
+		const lastTouchpoint = sortByCreatedAt[sortByCreatedAt.length - 1];
 
 		const restTouchpoints = new Set<string>();
-
-		for (const i of item) {
-			jorneyAgrouped.push({
-				firstTouchpoint,
-				lastTouchpoint,
-				restTouchpoints,
-				sessionId,
-				createdAt: i.createdAt,
-			});
-		}
-
-		//todo: analisar esse for, acredito que ele seja o causador do problema
-		for (let i = 1; i < sortByCreatedAt.length - 2; i++) {
+		for (let i = 1; i < sortByCreatedAt.length - 1; i++) {
 			const item = sortByCreatedAt[i];
 			if (
-				item.utm_source === firstTouchpoint ||
-				item.utm_source === lastTouchpoint
+				item.utm_source === firstTouchpoint.utm_source ||
+				item.utm_source === lastTouchpoint.utm_source
 			)
 				continue;
 			restTouchpoints.add(sortByCreatedAt[i].utm_source);
 		}
+
+		jorneyAgrouped.push({
+			firstTouchpoint: firstTouchpoint.utm_source,
+			lastTouchpoint: lastTouchpoint.utm_source,
+			restTouchpoints,
+			sessionId,
+			createdAt: firstTouchpoint.createdAt,
+		});
 	}
 
 	return jorneyAgrouped;
 }
 
 //salvar elas no banco
-export async function saveJourneys(journeys: JourneySchema[]) {}
+export async function saveJourneys(journeysData: JourneySchema[]) {
+	let i = 0;
+	for (const j of journeysData) {
+		await db.insert(journeys).values({
+			firstTouchpoint: j.firstTouchpoint,
+			lastTouchpoint: j.lastTouchpoint,
+			sessionId: j.sessionId,
+			createdAt: j.createdAt,
+		});
+
+		await db.insert(touchpoints);
+	}
+}
 //filtrar agrupando por sessão do usuário(sessionId)  e ordenando por criação(created_at)
 
 app.get("/journeys", async (request, reply) => {});
