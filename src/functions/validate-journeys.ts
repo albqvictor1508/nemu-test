@@ -3,8 +3,7 @@ import type { JourneySchema, RawDataSchema } from "../types/journey";
 export async function validateJourneys(
 	rawDataFormatted: Map<string, RawDataSchema[]>,
 ): Promise<JourneySchema[] | null> {
-	const jorneyAgrouped: JourneySchema[] = [];
-
+	const jorneyValidatedData: JourneySchema[] = [];
 	for (const [sessionId, item] of rawDataFormatted) {
 		const sortByCreatedAt: RawDataSchema[] = item.sort(
 			(a, b) =>
@@ -25,7 +24,7 @@ export async function validateJourneys(
 			restTouchpoints.add(sortByCreatedAt[i].utm_source);
 		}
 
-		jorneyAgrouped.push({
+		jorneyValidatedData.push({
 			firstTouchpoint: firstTouchpoint.utm_source,
 			lastTouchpoint: lastTouchpoint.utm_source,
 			restTouchpoints,
@@ -39,5 +38,5 @@ export async function validateJourneys(
 		});
 	}
 
-	return jorneyAgrouped;
+	return jorneyValidatedData;
 }

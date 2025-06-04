@@ -5,7 +5,8 @@
 	"main": "index.js",
 	"scripts": {
 		"dev": "tsx --env-file .env --watch src/server.ts",
-		"drizzle": "drizzle-kit generate && drizzle-kit migrate"
+		"drizzle": "drizzle-kit generate && drizzle-kit migrate",
+		"save": "tsx --env-file .env --watch src/functions/save-journeys.ts"
 	},
 	"keywords": [],
 	"author": "",
