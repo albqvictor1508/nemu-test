@@ -82,8 +82,7 @@ export async function saveJourneys(journeysData: JourneySchema[]) {
 	//redefinir a lógica de position
 	await db.delete(journeys);
 	await db.delete(touchpoints);
-	for (let i = 0; i < journeysData.length; i++) {
-		const journeyData = journeysData[i];
+	for (const journeyData of journeysData) {
 		const [journey] = await db
 			.insert(journeys)
 			.values({
@@ -128,9 +127,8 @@ app.get("/journeys", async (request, reply) => {
 		const touchpointList: string[] = touchpointsGrouped.get(t.journeyId) || [];
 		touchpointList.push(t.source);
 		touchpointsGrouped.set(t.journeyId, touchpointList);
-		console.log("touchpoint group " + touchpointsGrouped.get(t.journeyId));
 	}
-	console.log(touchpointsGrouped);
+
 	const response = journeysReply.map((j) => {
 		return {
 			id: j.id,
