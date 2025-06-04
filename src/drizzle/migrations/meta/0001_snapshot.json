@@ -1,6 +1,6 @@
 {
-  "id": "5c8cdafc-9864-437e-bea0-7270c2617ef4",
-  "prevId": "584ef1d1-58ce-4ae2-b44f-c94704587ea7",
+  "id": "c4204411-cf6e-46f5-8084-ae3803d5611d",
+  "prevId": "751e33b8-4d0c-445a-80ac-1216dcd5bef5",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -57,6 +57,18 @@
           "primaryKey": true,
           "notNull": true
         },
+        "session_id": {
+          "name": "session_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "journey_id": {
+          "name": "journey_id",
+          "type": "serial",
+          "primaryKey": false,
+          "notNull": true
+        },
         "source": {
           "name": "source",
           "type": "text",
@@ -67,13 +79,19 @@
           "name": "content",
           "type": "text",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "campaign": {
           "name": "campaign",
           "type": "text",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
+        },
+        "medium": {
+          "name": "medium",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
         },
         "created_at": {
           "name": "created_at",
@@ -83,13 +101,27 @@
         },
         "position": {
           "name": "position",
-          "type": "serial",
+          "type": "integer",
           "primaryKey": false,
           "notNull": true
         }
       },
       "indexes": {},
-      "foreignKeys": {},
+      "foreignKeys": {
+        "touchpoints_journey_id_journeys_id_fk": {
+          "name": "touchpoints_journey_id_journeys_id_fk",
+          "tableFrom": "touchpoints",
+          "tableTo": "journeys",
+          "columnsFrom": [
+            "journey_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},

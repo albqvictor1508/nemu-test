@@ -1,5 +1,5 @@
 {
-  "id": "584ef1d1-58ce-4ae2-b44f-c94704587ea7",
+  "id": "751e33b8-4d0c-445a-80ac-1216dcd5bef5",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -34,7 +34,7 @@
         },
         "created_at": {
           "name": "created_at",
-          "type": "timestamp",
+          "type": "text",
           "primaryKey": false,
           "notNull": true
         }
@@ -57,6 +57,12 @@
           "primaryKey": true,
           "notNull": true
         },
+        "journey_id": {
+          "name": "journey_id",
+          "type": "serial",
+          "primaryKey": false,
+          "notNull": true
+        },
         "source": {
           "name": "source",
           "type": "text",
@@ -67,29 +73,49 @@
           "name": "content",
           "type": "text",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "campaign": {
           "name": "campaign",
           "type": "text",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
+        },
+        "medium": {
+          "name": "medium",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
         },
         "created_at": {
           "name": "created_at",
-          "type": "timestamp",
+          "type": "text",
           "primaryKey": false,
           "notNull": true
         },
         "position": {
           "name": "position",
-          "type": "serial",
+          "type": "integer",
           "primaryKey": false,
           "notNull": true
         }
       },
       "indexes": {},
-      "foreignKeys": {},
+      "foreignKeys": {
+        "touchpoints_journey_id_journeys_id_fk": {
+          "name": "touchpoints_journey_id_journeys_id_fk",
+          "tableFrom": "touchpoints",
+          "tableTo": "journeys",
+          "columnsFrom": [
+            "journey_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},

@@ -2,9 +2,10 @@ import { fastify } from "fastify";
 import multipart from "@fastify/multipart";
 import { resolve } from "node:path";
 import xlsx from "xlsx";
-import type { JourneySchema, RawDataSchema } from "./types/journey";
+import type { JourneySchema, RawDataSchema, Touchpoint } from "./types/journey";
 import { db } from "./drizzle/client";
 import { journeys, touchpoints } from "./drizzle/schema";
+import { eq } from "drizzle-orm";
 
 export const app = fastify();
 app.register(multipart);
@@ -65,6 +66,11 @@ export async function validateJourneys(
 			restTouchpoints,
 			sessionId,
 			createdAt: firstTouchpoint.createdAt,
+			touchpoint: {
+				campaign: firstTouchpoint.utm_campaign,
+				content: firstTouchpoint.utm_content,
+				medium: firstTouchpoint.utm_medium,
+			},
 		});
 	}
 
@@ -73,21 +79,71 @@ export async function validateJourneys(
 
 //salvar elas no banco
 export async function saveJourneys(journeysData: JourneySchema[]) {
-	let i = 0;
-	for (const j of journeysData) {
-		await db.insert(journeys).values({
-			firstTouchpoint: j.firstTouchpoint,
-			lastTouchpoint: j.lastTouchpoint,
-			sessionId: j.sessionId,
-			createdAt: j.createdAt,
-		});
+	//redefinir a lógica de position
+	await db.delete(journeys);
+	await db.delete(touchpoints);
+	for (let i = 0; i < journeysData.length; i++) {
+		const journeyData = journeysData[i];
+		const [journey] = await db
+			.insert(journeys)
+			.values({
+				firstTouchpoint: journeyData.firstTouchpoint,
+				lastTouchpoint: journeyData.lastTouchpoint,
+				sessionId: journeyData.sessionId,
+				createdAt: journeyData.createdAt,
+			})
+			.returning({ id: journeys.id, sessionId: journeys.sessionId });
+		const touchpointList: string[] = [
+			journeyData.firstTouchpoint,
+			...journeyData.restTouchpoints,
+			journeyData.lastTouchpoint,
+		];
 
-		await db.insert(touchpoints);
+		const { campaign, content, medium } = journeyData.touchpoint;
+
+		await db.insert(touchpoints).values({
+			sessionId: journey.sessionId,
+			journeyId: journey.id,
+			campaign,
+			content,
+			createdAt: journeyData.createdAt,
+			medium,
+			source: touchpointList[i],
+			position: i + 1,
+		});
 	}
 }
 //filtrar agrupando por sessão do usuário(sessionId)  e ordenando por criação(created_at)
 
-app.get("/journeys", async (request, reply) => {});
+app.get("/journeys", async (request, reply) => {
+	const touchpointsGrouped = new Map<number, string[]>();
+	const journeysReply = await db.select().from(journeys);
+
+	const touchpointsByJourney = await db
+		.select()
+		.from(touchpoints)
+		.orderBy(touchpoints.journeyId, touchpoints.position);
+
+	for (const t of touchpointsByJourney) {
+		const touchpointList: string[] = touchpointsGrouped.get(t.journeyId) || [];
+		touchpointList.push(t.source);
+		touchpointsGrouped.set(t.journeyId, touchpointList);
+		console.log("touchpoint group " + touchpointsGrouped.get(t.journeyId));
+	}
+	console.log(touchpointsGrouped);
+	const response = journeysReply.map((j) => {
+		return {
+			id: j.id,
+			sessionId: j.sessionId,
+			firstTouchpoint: j.firstTouchpoint,
+			lastTouchpoint: j.lastTouchpoint,
+			touchpoints: "",
+			createdAt: j.createdAt,
+		};
+	});
+
+	reply.send(response);
+});
 
 app.listen({ port: 3333 }, () => {
 	console.log("HTTP Server running!");
