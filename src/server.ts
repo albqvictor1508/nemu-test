@@ -94,22 +94,23 @@ export async function saveJourneys(journeysData: JourneySchema[]) {
 			.returning({ id: journeys.id, sessionId: journeys.sessionId });
 		const touchpointList: string[] = [
 			journeyData.firstTouchpoint,
-			...journeyData.restTouchpoints,
+			...Array.from(journeyData.restTouchpoints), //falar o porque dessa lógica
 			journeyData.lastTouchpoint,
 		];
 
 		const { campaign, content, medium } = journeyData.touchpoint;
 
-		await db.insert(touchpoints).values({
-			sessionId: journey.sessionId,
-			journeyId: journey.id,
-			campaign,
-			content,
-			createdAt: journeyData.createdAt,
-			medium,
-			source: touchpointList[i],
-			position: i + 1,
-		});
+		for (let i = 0; i < touchpointList.length; i++)
+			await db.insert(touchpoints).values({
+				sessionId: journey.sessionId,
+				journeyId: journey.id,
+				campaign,
+				content,
+				createdAt: journeyData.createdAt,
+				medium,
+				source: touchpointList[i],
+				position: i + 1,
+			});
 	}
 }
 //filtrar agrupando por sessão do usuário(sessionId)  e ordenando por criação(created_at)
@@ -135,7 +136,7 @@ app.get("/journeys", async (request, reply) => {
 			sessionId: j.sessionId,
 			firstTouchpoint: j.firstTouchpoint,
 			lastTouchpoint: j.lastTouchpoint,
-			touchpoints: "",
+			touchpoints: touchpointsGrouped.get(j.id) ?? [],
 			createdAt: j.createdAt,
 		};
 	});
