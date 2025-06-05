@@ -1,14 +1,21 @@
-export type JourneySchema = {
+export type Journey = {
+	id: number;
+	sessionId: string;
 	firstTouchpoint: string;
 	lastTouchpoint: string;
-	restTouchpoints: Set<string>;
-	sessionId: string;
+	touchpoints: string[];
+	touchpointQuantity: number;
 	createdAt: string;
-	touchpoint: Touchpoint;
 };
 
 export type Touchpoint = {
-	campaign: string;
+	journeyId: number;
+	content: string;
 	medium: string;
-	content?: string;
+	campaign: string;
+};
+
+export type JourneyResponse = {
+	journeys: Journey[];
+	touchpoints: Touchpoint[];
 };
