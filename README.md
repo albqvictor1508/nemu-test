@@ -52,4 +52,3 @@ Sistema para organização de uma planilha com jornadas de compra.
 ✅ Truncamento automático  
 ✅ Busca global  
 ✅ Paginação
-- Docker
