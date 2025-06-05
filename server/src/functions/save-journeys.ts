@@ -1,9 +1,17 @@
 import type { JourneySchema } from "../types/journey";
 import { db } from "../drizzle/client";
 import { journeys, touchpoints } from "../drizzle/schema";
+import { eq, exists } from "drizzle-orm";
 
 export async function saveJourneys(journeysData: JourneySchema[]) {
 	for (const journeyData of journeysData) {
+		const existingJourney = await db
+			.select({ id: journeys.id })
+			.from(journeys)
+			.where(eq(journeys.sessionId, journeyData.sessionId));
+
+		if (existingJourney) continue;
+
 		const [journey] = await db
 			.insert(journeys)
 			.values({

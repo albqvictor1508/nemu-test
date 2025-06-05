@@ -5,6 +5,9 @@ export async function validateJourneys(
 ): Promise<JourneySchema[] | null> {
 	const jorneyValidatedData: JourneySchema[] = [];
 	for (const [sessionId, item] of rawDataFormatted) {
+		item.map((i) => {
+			i.createdAt = new Date(i.createdAt).toISOString();
+		});
 		const sortByCreatedAt: RawDataSchema[] = item.sort(
 			(a, b) =>
 				new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
