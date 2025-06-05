@@ -1,9 +1,11 @@
 import type { JourneySchema } from "../types/journey";
 import { db } from "../drizzle/client";
 import { journeys, touchpoints } from "../drizzle/schema";
-import { eq, exists } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 
-export async function saveJourneys(journeysData: JourneySchema[]) {
+export async function saveJourneys(
+	journeysData: JourneySchema[],
+): Promise<void> {
 	for (const journeyData of journeysData) {
 		const existingJourney = await db
 			.select({ id: journeys.id })
@@ -21,6 +23,7 @@ export async function saveJourneys(journeysData: JourneySchema[]) {
 				createdAt: journeyData.createdAt,
 			})
 			.returning({ id: journeys.id, sessionId: journeys.sessionId });
+
 		const touchpointList: string[] = [
 			journeyData.firstTouchpoint,
 			...Array.from(journeyData.restTouchpoints), //falar o porque dessa lógica

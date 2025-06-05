@@ -8,11 +8,12 @@ import { validateJourneys } from "./functions/validate-journeys";
 import { groupJourneys } from "./functions/group-jorneys";
 import { saveJourneys } from "./functions/save-journeys";
 import fastifyCors from "@fastify/cors";
-import { count } from "node:console";
+import type { JourneySchema } from "./types/journey";
 
 export const app = fastify();
 app.register(fastifyCors);
 app.register(multipart);
+let x = 0;
 
 async function readExcelFile() {
 	try {
@@ -28,17 +29,18 @@ async function readExcelFile() {
 	}
 }
 
-async function init(): Promise<void> {
+async function init(): Promise<JourneySchema[]> {
 	const parsedData = await readExcelFile();
 	const rawDataFormatted = await groupJourneys(parsedData);
-	const jorneyValidatedData =
-		(await validateJourneys(rawDataFormatted)) || null;
-	if (!jorneyValidatedData) return;
-	await saveJourneys(jorneyValidatedData);
+	const jorneyValidatedData = await validateJourneys(rawDataFormatted);
+	return jorneyValidatedData;
 }
+do {
+	init().then((j) => saveJourneys(j).then());
+	x++;
+} while (x < 1);
 
 app.get("/journeys", async (_, reply) => {
-	await init();
 	const touchpointsGrouped = new Map<number, string[]>();
 	const journeysReply = await db
 		.select()
@@ -56,7 +58,7 @@ app.get("/journeys", async (_, reply) => {
 		touchpointsGrouped.set(t.journeyId, touchpointList);
 	}
 
-	const touchpointResponse = Array.from(touchpointsByJourney.values()).map(
+	const touchpointResponse = Array.from(touchpointsByJourney).map(
 		(touchpoint) => {
 			return {
 				journeyId: touchpoint.journeyId,
@@ -85,5 +87,4 @@ app.get("/journeys", async (_, reply) => {
 
 app.listen({ port: 3333 }, () => {
 	console.log("HTTP Server running!");
-	console.log("POST /upload");
 });

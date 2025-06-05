@@ -1,10 +1,10 @@
-import type { TouchpointsSchema } from "@/types/journeys";
+import type { TouchpointSchema } from "@/types/journeys";
 
 export const Touchpoint = ({
 	touchpoints,
 	firstTouchpoint,
 	lastTouchpoint,
-}: TouchpointsSchema) => {
+}: TouchpointSchema) => {
 	const MAX_VISIBLE_TOUCHPOINTS = 5;
 	const getRandomNumber = (): number => Math.floor(Math.random() * 4);
 
@@ -26,6 +26,7 @@ export const Touchpoint = ({
 
 	if (shouldTruncate) {
 		const visibleCount = MAX_VISIBLE_TOUCHPOINTS - 1;
+		//google -> instagram -> telegram -> gmail -> nemu -> discord -> google
 		displayTouchpoints = [
 			...touchpoints.slice(0, visibleCount - 1),
 			touchpoints[touchpoints.length - 1],
@@ -36,7 +37,6 @@ export const Touchpoint = ({
 	return (
 		<div className="flex items-center gap-2 flex-wrap">
 			{displayTouchpoints.map((touchpoint, index) => {
-				// Se é o último item e temos ellipsis, mostrar ellipsis antes
 				const isLastWithEllipsis =
 					showEllipsis && index === displayTouchpoints.length - 1;
 				const originalIndex = isLastWithEllipsis
@@ -48,7 +48,6 @@ export const Touchpoint = ({
 						key={`${touchpoint}-${originalIndex}`}
 						className="flex items-center"
 					>
-						{/* Mostrar ellipsis antes do último touchpoint */}
 						{isLastWithEllipsis && (
 							<>
 								<span className="px-2 py-1 text-xs text-gray-400">...</span>

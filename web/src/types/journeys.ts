@@ -15,6 +15,12 @@ export type Touchpoint = {
 	campaign: string;
 };
 
+export type TouchpointSchema = {
+	touchpoints: string[],
+	firstTouchpoint: string,
+	lastTouchpoint: string
+}
+
 export type JourneyResponse = {
 	journeys: Journey[];
 	touchpoints: Touchpoint[];

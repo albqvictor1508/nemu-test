@@ -8,7 +8,6 @@ export async function groupJourneys(
 		if (!rawDataFormatted.has(data.sessionId)) {
 			rawDataFormatted.set(data.sessionId, []);
 		}
-
 		rawDataFormatted.get(data.sessionId)?.push(data);
 	}
 	return rawDataFormatted;

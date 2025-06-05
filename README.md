@@ -24,8 +24,8 @@ Sistema para organização de uma planilha com jornadas de compra.
 
 ## Funcionalidades
 
-✅ Visualização em sequência com setas  
-✅ Destaque para primeiro/último  
-✅ Truncamento automático  
-✅ Busca global  
-✅ Paginação
+✅ Visualização em sequência com setas.  
+✅ Destaque para primeiro/último.
+✅ Truncamento automático de touchpoints na tabela no frontend. 
+✅ Busca global.  
+✅ Paginação.

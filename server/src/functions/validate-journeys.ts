@@ -2,12 +2,13 @@ import type { JourneySchema, RawDataSchema } from "../types/journey";
 
 export async function validateJourneys(
 	rawDataFormatted: Map<string, RawDataSchema[]>,
-): Promise<JourneySchema[] | null> {
+): Promise<JourneySchema[]> {
 	const jorneyValidatedData: JourneySchema[] = [];
 	for (const [sessionId, item] of rawDataFormatted) {
 		item.map((i) => {
 			i.createdAt = new Date(i.createdAt).toISOString();
 		});
+
 		const sortByCreatedAt: RawDataSchema[] = item.sort(
 			(a, b) =>
 				new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
@@ -16,7 +17,7 @@ export async function validateJourneys(
 		const firstTouchpoint = sortByCreatedAt[0];
 		const lastTouchpoint = sortByCreatedAt[sortByCreatedAt.length - 1];
 
-		const restTouchpoints = new Set<string>();
+		const restTouchpoints = new Set<string>(); // não aceita valores iguais | ele não ordena valores
 		for (let i = 1; i < sortByCreatedAt.length - 1; i++) {
 			const item = sortByCreatedAt[i];
 			if (
@@ -24,7 +25,7 @@ export async function validateJourneys(
 				item.utm_source === lastTouchpoint.utm_source
 			)
 				continue;
-			restTouchpoints.add(sortByCreatedAt[i].utm_source);
+			restTouchpoints.add(sortByCreatedAt[i].utm_source); //facebook -> google -> amazon -> nemu -> facebook
 		}
 
 		jorneyValidatedData.push({
